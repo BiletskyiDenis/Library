@@ -22,3 +22,53 @@ select,
 textarea {
     max-width: 280px;
 }
+
+.itemLabel{
+    font-size:21px;
+    font-weight:bold;
+    float:right;
+}
+
+.table-isbn-info{
+    float:right;
+    opacity:0.5;
+    margin-top:-10px;
+}
+.image-preview{
+    text-align:center;
+}
+
+.image-preview img{
+    margin-bottom:20px;
+}
+
+#itemDescription{
+    font-size:16px;
+}
+
+#itemTitle{
+    font-weight:bold;
+    font-size:36px;
+    margin-top:-10px;
+}
+
+#itemAuthor {
+    font-size: 24px;
+
+}
+
+.table-info {
+    opacity: 0.5;
+}
+
+.last-books{
+    text-align:center;
+}
+
+    .last-books img{
+        height:375px;
+    }
+    
+    .lastBooks {
+        opacity: 0.5;
+    }

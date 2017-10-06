@@ -1,0 +1,36 @@
+﻿@model IEnumerable<Library.Data.Models.Book>
+@using System.Web.Hosting;
+
+
+@{var lastAdd = Model.OrderByDescending(m => m.Id).Take(3);}
+
+@foreach (var item in lastAdd)
+{
+    <div class="col-md-4 last-books">
+
+        
+        @{ var img = item.ImageUrl;
+            var path = HostingEnvironment.MapPath(@"~/img/books/" + img);
+            var descr = item.Description;}
+        @if (descr.Length>300)
+        {
+            descr = descr.Substring(0, 300)+"...";
+        }
+        @if (img != "none" && File.Exists(path))
+                {
+            <img src="~/img/books/@item.ImageUrl" alt="@item.Title" />
+        }
+        else
+        {
+            <img src="~/img/none.jpg" alt="@item.Title" />
+        }
+        <h3>@item.Title</h3>
+        <p>
+            @descr
+        </p>
+        <p>
+            @Html.ActionLink("View Details", "Details", "Library", new { id = item.Id }, new { @class = "btn btn-default" })
+        </p>
+
+    </div>
+            }

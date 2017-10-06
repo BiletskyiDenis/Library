@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Library.Data;
+using Library.Service;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -8,23 +10,19 @@ namespace Library.Controllers
 {
     public class HomeController : Controller
     {
+        private ILibraryService libraryService;
+        public HomeController()
+        {
+            this.libraryService = new LibraryService(new LibraryContext("name=LibraryDB"));
+        }
         public ActionResult Index()
         {
-            return View();
+            return View(libraryService.GetBooks());
         }
 
-        public ActionResult About()
+        protected override void Dispose(bool disposing)
         {
-            ViewBag.Message = "Your application description page.";
-
-            return View();
-        }
-
-        public ActionResult Contact()
-        {
-            ViewBag.Message = "Your contact page.";
-
-            return View();
+            libraryService.Dispose();
         }
     }
 }

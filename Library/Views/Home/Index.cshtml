@@ -9,7 +9,10 @@
 </div>
 
 <div class="row">
-    <h2 class="lastBooks">Recently added books</h2>
-    <hr />
-@Html.Partial("_LastBooks", Model)
+    @if (@Model.Count() >= 3)
+    {
+        <h2 class="lastBooks">Recently added books</h2>
+        <hr />
+        @Html.Partial("_LastBooks", Model)
+    }
 </div>

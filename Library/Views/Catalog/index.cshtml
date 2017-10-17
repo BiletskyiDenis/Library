@@ -92,7 +92,7 @@
 
 @using (Html.BeginForm("UploadData", "Catalog", FormMethod.Post, new { enctype = "multipart/form-data", id = "loadFileForm" }))
 {
-    <input type="file" id="fileinput" name="upFile" accept=".txt, .xml|data files/*" onchange="uploadFile(event)" style="display: none" />
+    <input type="file" id="fileinput" name="upFile" accept=".txt,.xml, |data files/*" onchange="uploadFile(event)" style="display: none" />
 }
 
 @section scripts{

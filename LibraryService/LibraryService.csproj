@@ -43,6 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FileDataHandler.cs" />
     <Compile Include="ILibraryService.cs" />
     <Compile Include="ImageHandler.cs" />
     <Compile Include="LibraryService.cs" />
@@ -53,6 +54,9 @@
       <Project>{c38cd912-18c6-4396-9cd1-4bf05fa3d750}</Project>
       <Name>LibraryData</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Models\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

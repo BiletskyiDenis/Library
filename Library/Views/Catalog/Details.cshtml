@@ -1,0 +1,88 @@
+﻿@model Library.Models.Catalog.DetailModel
+@using Library.Helpers;
+
+@{
+    ViewBag.Title = "Details";
+}
+
+<h2>Details</h2>
+
+<div>
+
+    <hr />
+
+    <div class="jumbotron">
+        <div class="row">
+            <div class="col-md-4 image-preview">
+                @Html.ImageHelper("/img/assets/", Model.ImageUrl, "/img/none.jpg")
+            </div>
+            <div class="col-md-6">
+                <p id="itemTitle">@Model.Title</p>
+                <p id="itemAuthor">@Model.Author</p>
+                @{var genOrCat = Model.Type == Library.Data.Models.AssetType.Book ? "Genre" : "Category";}
+                <table class="table-info">
+                    <tr>
+                        <td>@genOrCat:</td>
+                        <td>@Model.GenreOrCategory</td>
+                    </tr>
+                    <tr>
+                        @if (Model.Type == Library.Data.Models.AssetType.Journal)
+                        {
+                            <td>Frequency:</td>
+                            <td>@Model.Frequency</td>
+                        }
+
+                    </tr>
+                    <tr>
+                        <td>Year:</td>
+                        <td>@Model.Year</td>
+                    </tr>
+                    <tr>
+                        <td>Publisher:</td>
+                        <td>@Model.Publisher</td>
+                    </tr>
+                    <tr>
+                        <td>Price:</td>
+                        <td>@Model.Price</td>
+                    </tr>
+                    <tr>
+                        <td>Count:</td>
+                        <td>@Model.NumberOfCopies</td>
+                    </tr>
+                </table>
+            </div>
+            @if (Model.Type == Library.Data.Models.AssetType.Book)
+            {
+                <div class="col-md-2">
+                    <table class="table-isbn-info">
+                        <tr>
+                            <td class="itemLabel">ISBN:</td>
+                            <td class="itemValue">@Model.ISBN</td>
+                        </tr>
+                    </table>
+                </div>
+            }
+
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <p id="itemDescription">@Model.Description</p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="btn-group downloadButton">
+                <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Download <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu">
+                    <li>@Html.ActionLink("XML", "DownloadData", new { type = "xml", id = Model.Id })</li>
+                    <li>@Html.ActionLink("TXT", "DownloadData", new { type = "txt", id = Model.Id })</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<p>
+    @Html.ActionLink("Edit", "Edit", new { id = Model.Id }) |
+    @Html.ActionLink("Back to List", "Index")
+</p>

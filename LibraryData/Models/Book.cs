@@ -6,14 +6,17 @@ using System.Web;
 
 namespace Library.Data.Models
 {
+    [Serializable]
     public class Book:LibraryAsset
     {
         [Required]
-        public long ISBN { get; set; }
-        [Required]
         public string Author { get; set; }
+        public string ISBN { get; set; }
 
-        public string Publisher { get; set; }
         public int Pages { get; set; }
+
+        [Required]
+        [Display (Name ="Genre")]
+        public override string GenreOrCategory { get; set; }
     }
 }

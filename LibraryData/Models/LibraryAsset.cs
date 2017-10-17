@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Web;
 
 namespace Library.Data.Models
 {
+    [Serializable]
     public abstract class LibraryAsset
     {
         public int Id { get; set; }
@@ -14,13 +16,19 @@ namespace Library.Data.Models
         [Required]
         public int Year { get; set; }
 
-        [Required]
-        public decimal Price { get; set; }
         public string ImageUrl { get; set; }
         public string Description { get; set; }
         public string Country { get; set; }
-        public string Genre { get; set; }
+        public string Publisher { get; set; }
         public string Language { get; set; }
+
+        [Required]
+        [DisplayName("Price ($)")]
+        public decimal Price { get; set; }
+
+        [Required]
+        public virtual string GenreOrCategory{ get; set; }
+
         [Required]
         [Display(Name ="Count")]
         public int NumbersOfCopies { get; set; }

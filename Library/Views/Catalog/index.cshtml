@@ -1,0 +1,167 @@
+﻿@model Library.Models.Catalog.AssetIndexModel
+@using Library.Helpers
+@using Library.Service
+@{
+    ViewBag.Title = "Library Catalog";
+}
+
+<h2>@ViewBag.Title</h2>
+
+<p>
+    <div class="dropdown">
+        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Add New<span class="caret"></span></a>
+        <button id="fileUpLoadButton" type="button" class="btn btn-info uploadButton">Upload Data</button>
+        <ul class="dropdown-menu">
+            @foreach (var type in Model.Types)
+            {
+                <li>@Html.ActionLink("Add " + @type, "AddAsset", new { type = @type })</li>
+            }
+        </ul>
+    </div>
+</p>
+
+<div id="assetsTable">
+    <table class="table table-hover" id="catalogIndexTable">
+        <thead>
+            <tr>
+                <th>Image</th>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Type</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var asset in Model.Assets)
+            {
+
+                <tr class="assetRow" id="asset_@asset.Id">
+                    <td>
+                        @Html.ImageHelper("/img/assets_small/", asset.ImageUrl, "/img/none_small.png")
+                    </td>
+                    <td>@asset.Title</td>
+                    @if (asset.Type == Library.Data.Models.AssetType.Book)
+                    {
+                        <td>@asset.Author</td>
+                    }
+                    else
+                    {
+                        <td>@asset.Publisher</td>
+                    }
+                    <td>@asset.Type</td>
+
+                    <td>
+                        @Html.ActionLink("Edit", "Edit", new { id = asset.Id }) |
+                        @Html.ActionLink("Details", "Details", new { id = asset.Id }) |
+                        <a href="#" onclick="deleteConfirm(@asset.Id)">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal -->
+<div class="modal fade deleteModal" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel">
+                    Are you sure you want to delete this <span id="modalType"></span>?
+
+                </h4>
+            </div>
+            <div class="modal-body">
+                <img id="modalImg" src="#" alt="image" />
+                <div class="modalAbout">
+                    <p id="modalTitle"></p>
+                    <p id="modalAuthor"></p>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" id="modaldeleteButton" class="btn btn-danger">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+@using (Html.BeginForm("UploadData", "Catalog", FormMethod.Post, new { enctype = "multipart/form-data", id = "loadFileForm" }))
+{
+    <input type="file" id="fileinput" name="upFile" accept=".txt, .xml|data files/*" onchange="uploadFile(event)" style="display: none" />
+}
+
+@section scripts{
+    <script>
+
+        function uploadFile(evt) {
+            $("#loadFileForm").submit();
+        }
+
+        $(function () {
+            $("#fileUpLoadButton").click(function () {
+                $("#fileinput").click();
+            })
+        });
+
+        $(document).ready(function () {
+            $('#modalImg').on("error ", function () {
+                $('#modalImg').attr('src', '/img/none_small.png');
+            });
+
+        }); 
+
+        function deleteConfirm(arg) {
+            $.ajax({
+                url:'@Url.Action("Delete", "Catalog")',
+                type: 'GET',
+                data: {id: arg},
+                contentType: 'application/x-www-form-urlencoded; charset=utf-8',
+                success: function (response) {
+                    $('#modalImg').attr('src', '/img/none_small.png');
+
+
+
+                    if (response.ImageUrl!='none') {
+                        $('#modalImg').attr('src', '/img/assets_small/'+ response.ImageUrl);
+                    }
+
+                    $('#modalTitle').text(response.Title);
+                    $('#modalAuthor').text(response.Author);
+                    $('#modalType').text((response.Type).toLowerCase());
+                    $('#deleteModal').modal('show');
+
+                    $('#modaldeleteButton').click(function () {deleteAsset(arg)});
+                },
+                error: function (response) {
+                    alert('error')
+                }
+            })
+        }
+
+       function deleteAsset(arg) {
+            var token = $('input[name="__RequestVerificationToken"]').val();
+            $.ajax({
+                url:'@Url.Action("Delete", "Catalog")',
+                type: 'POST',
+                data: {
+                    __RequestVerificationToken: token,
+                    id: arg
+                },
+                contentType: 'application/x-www-form-urlencoded; charset=utf-8',
+                success: function () {
+                    $('#deleteModal').modal('hide');
+                    $('#asset_' + arg).remove();
+                },
+                error: function (response) {
+                    alert('error')
+                }
+            })
+       }
+    </script>
+}
+

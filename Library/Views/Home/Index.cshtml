@@ -1,18 +1,37 @@
-﻿@model IEnumerable<Library.Data.Models.Book>
+﻿@model Library.Models.Index.RecentlyAddedAssetsLists
 
 @{
     ViewBag.Title = "Home Page";
 }
 
 <div class="jumbotron">
-    <h1>Books catalogue</h1>
+    <h1>Library catalogue</h1>
 </div>
 
-<div class="row">
-    @if (@Model.Count() >= 3)
-    {
-        <h2 class="lastBooks">Recently added books</h2>
+
+@if (@Model.RecentlyAddedBooks.Count() > 0)
+{
+    <div class="row lastAssetsMain">
+        <h2 class="lastAssets">Recently added books</h2>
         <hr />
-        @Html.Partial("_LastBooks", Model)
-    }
-</div>
+        @Html.Partial("_LastAssets", Model.RecentlyAddedBooks)
+    </div>
+}
+
+@if (@Model.RecentlyAddedJournals.Count() > 0)
+            {
+    <div class="row lastAssetsMain">
+        <h2 class="lastAssets">Recently added journals</h2>
+        <hr />
+        @Html.Partial("_LastAssets", Model.RecentlyAddedJournals)
+    </div>
+}
+
+@if (@Model.RecentlyAddedBrochures.Count() > 0)
+{
+    <div class="row lastAssetsMain">
+        <h2 class="lastAssets">Recently added brochures</h2>
+        <hr />
+        @Html.Partial("_LastAssets", Model.RecentlyAddedBrochures)
+    </div>
+}

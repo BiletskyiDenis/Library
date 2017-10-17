@@ -14,30 +14,22 @@ namespace Library.Service
     public class LibraryService : ILibraryService
     {
         private LibraryContext context;
-        private readonly string imageStorePath = @"~/img/books/";
-        private readonly string imageSmallStorePath = @"~/img/books_small/";
+        private readonly string imageStorePath = @"~/img/assets/";
+        private readonly string imageSmallStorePath = @"~/img/assets_small/";
 
         public LibraryService(LibraryContext context)
         {
             this.context = context;
         }
-        public bool DeleteBook(int id)
+
+        public IEnumerable<LibraryAsset> GetAll()
         {
-            var book = context.Books.Find(id);
-            if (book == null)
-            {
-                return false;
-            }
-
-            DeleteImage(book);
-            context.Books.Remove(book);
-
-            return true;
+            return context.LibraryAssets.ToList();
         }
 
-        public Book GetBook(int? id)
+        public LibraryAsset GetById(int? id)
         {
-            return context.Books.Find(id);
+            return GetAll().FirstOrDefault(asset => asset.Id == id);
         }
 
         public IEnumerable<Book> GetBooks()
@@ -45,18 +37,118 @@ namespace Library.Service
             return context.Books.ToList();
         }
 
-        public void InsertBook(Book book, HttpPostedFileBase file)
+        public IEnumerable<Journal> GetJournals()
         {
-            try
+            return context.Journals.ToList();
+        }
+
+        public IEnumerable<Brochure> GetBrochures()
+        {
+            return context.Brochures.ToList();
+        }
+
+        public string GetISBN(int id)
+        {
+            var isBook = context.LibraryAssets.OfType<Book>()
+                .Where(d => d.Id == id).Any();
+
+            if (isBook)
             {
-                book.ImageUrl = UploadImage(book,file);
-            }
-            catch (Exception)
-            {
-                book.ImageUrl = "none";
+                return context.Books.FirstOrDefault(b => b.Id == id).ISBN;
             }
 
-            context.Books.Add(book);
+            return string.Empty;
+        }
+
+        public int GetPages(int id)
+        {
+            var isBook = context.LibraryAssets.OfType<Book>()
+                .Where(d => d.Id == id).Any();
+
+            if (isBook)
+            {
+                return context.Books.FirstOrDefault(b => b.Id == id).Pages;
+            }
+
+            return 0;
+        }
+
+        public string GetAuthor(int id)
+        {
+            var isBook = context.LibraryAssets.OfType<Book>()
+                .Where(d => d.Id == id).Any();
+
+            if (isBook)
+            {
+                return context.Books.FirstOrDefault(b => b.Id == id).Author;
+            }
+
+            return string.Empty;
+        }
+
+        public AssetType GetType(int? id)
+        {
+            var isBook = context.LibraryAssets.OfType<Book>()
+                        .Where(d => d.Id == id);
+
+            var isJournal = context.LibraryAssets.OfType<Journal>()
+            .Where(d => d.Id == id);
+
+            var isBrochure = context.LibraryAssets.OfType<Brochure>()
+            .Where(d => d.Id == id);
+
+            if (isBook.Any())
+                return AssetType.Book;
+
+            if (isJournal.Any())
+                return AssetType.Journal;
+
+            return AssetType.Brochure;
+        }
+
+        public IEnumerable<string> GetAllTypes()
+        {
+            return Enum.GetNames(typeof(AssetType));
+        }
+
+        public string GetFrequency(int id)
+        {
+            if (context.Journals.Any(j => j.Id == id))
+            {
+                return context.Journals.FirstOrDefault(j => j.Id == id).Frequency;
+            }
+            return string.Empty;
+        }
+
+        public bool DeleteAsset(int id)
+        {
+            var asset = context.LibraryAssets.Find(id);
+            if (asset == null)
+            {
+                return false;
+            }
+
+            DeleteImage(asset);
+            context.LibraryAssets.Remove(asset);
+
+            return true;
+        }
+
+        public void AddAsset(LibraryAsset asset, HttpPostedFileBase file)
+        {
+            if (file != null)
+            {
+                try
+                {
+                    asset.ImageUrl = UploadImage(asset, file);
+                }
+                catch (Exception)
+                {
+                    asset.ImageUrl = "none";
+                }
+            }
+
+            context.LibraryAssets.Add(asset);
         }
 
         public void Save()
@@ -64,39 +156,19 @@ namespace Library.Service
             context.SaveChanges();
         }
 
-        public void UpdateBook(Book book, HttpPostedFileBase file)
+        public void UpdateAsset(LibraryAsset asset, HttpPostedFileBase file)
         {
             if (file != null && file.FileName != string.Empty)
             {
-                DeleteImage(book);
-                book.ImageUrl = UploadImage(book,file);
+                DeleteImage(asset);
+                asset.ImageUrl = UploadImage(asset, file);
             }
-            context.Entry(book).State = EntityState.Modified;
+            context.Entry(asset).State = EntityState.Modified;
         }
 
-        private bool disposed = false;
-
-        protected virtual void Dispose(bool disposing)
+        public string UploadImage(LibraryAsset asset, HttpPostedFileBase file)
         {
-            if (!this.disposed)
-            {
-                if (disposing)
-                {
-                    context.Dispose();
-                }
-            }
-            this.disposed = true;
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        public string UploadImage(Book book, HttpPostedFileBase file)
-        {
-            var fileName = GetImageFileName(book);
+            var fileName = GetImageFileName(asset);
             byte[] data = new byte[] { };
             if (file != null)
             {
@@ -117,11 +189,58 @@ namespace Library.Service
             return fileName;
 
         }
-        public void DeleteImage(Book book)
+
+        public bool UploadData(HttpPostedFileBase file)
         {
-            var pathBig = HostingEnvironment.MapPath(imageStorePath + book.ImageUrl);
-            var pathSmall = HostingEnvironment.MapPath(imageSmallStorePath + book.ImageUrl);
-            if (book.ImageUrl == "none")
+            LibraryAsset asset;
+            byte[] data = new byte[] { };
+
+            var fileExt = Path.GetExtension(file.FileName);
+
+            if (file == null)
+            {
+                return false;
+            }
+            try
+            {
+                using (var binaryReader = new BinaryReader(file.InputStream))
+                {
+                    data = binaryReader.ReadBytes(file.ContentLength);
+                }
+
+                using (var stream = new MemoryStream(data))
+                {
+                    if (fileExt == ".xml")
+                    {
+                        asset = new FileDataHandler().RestoreFromXml(stream);
+                    }
+                    else
+                    {
+                        asset = new FileDataHandler().RestoreFromTxt(stream);
+                    }
+
+                }
+            }
+            catch (Exception)
+            {
+
+                return false;
+            }
+
+            if (asset != null)
+            {
+                AddAsset(asset, null);
+                Save();
+            }
+
+            return true;
+        }
+
+        public void DeleteImage(LibraryAsset asset)
+        {
+            var pathBig = HostingEnvironment.MapPath(imageStorePath + asset.ImageUrl);
+            var pathSmall = HostingEnvironment.MapPath(imageSmallStorePath + asset.ImageUrl);
+            if (asset.ImageUrl == "none")
                 return;
 
             if (File.Exists(pathBig))
@@ -130,19 +249,19 @@ namespace Library.Service
             if (File.Exists(pathSmall))
                 File.Delete(pathSmall);
 
-            book.ImageUrl = "none";
+            asset.ImageUrl = "none";
         }
 
-        public string GetImageFileName(Book book)
+        public string GetImageFileName(LibraryAsset asset)
         {
             var dest = string.Empty;
+            var rn = new Random();
 
             var raw = new string[]
             {
-                book.Title,
-                book.Publisher,
-                book.Pages.ToString(),
-                book.Year.ToString(),
+                asset.Title,
+                asset.Publisher,
+                asset.Year.ToString(),
             };
             foreach (var item in raw)
             {
@@ -153,7 +272,26 @@ namespace Library.Service
                 }
                 dest += tmpItem;
             }
-            return dest;
+            return dest + rn.Next(1000, 9999).ToString();
+        }
+
+        private bool disposed = false;
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!this.disposed)
+            {
+                if (disposing)
+                {
+                    context.Dispose();
+                }
+            }
+            this.disposed = true;
+        }
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
 }

@@ -1,0 +1,25 @@
+﻿@model IEnumerable<Library.Models.Index.RecentlyAddedAsset>
+@using Library.Helpers;
+
+@foreach (var item in Model)
+{
+    <div class="col-md-4 last-assets">
+        <div class="assetImg">
+            @Html.ImageHelper("/img/assets/", item.ImageUrl, "/img/none.jpg")
+        </div>
+        @{ var descr = item.Description;}
+        @if (descr != null && descr.Length > 300)
+        {
+            descr = descr.Substring(0, 300) + "...";
+        }
+
+        <h3>@item.Title</h3>
+        <p>
+            @descr
+        </p>
+        <p>
+            @Html.ActionLink("View Details", "Details", "Catalog", new { id = item.Id }, new { @class = "btn btn-default" })
+        </p>
+
+    </div>
+}

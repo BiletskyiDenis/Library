@@ -6,15 +6,25 @@ namespace Library.Service
 {
     public interface ILibraryService
     {
-        bool DeleteBook(int id);
-        void DeleteImage(Book book);
+        void AddAsset(LibraryAsset asset, HttpPostedFileBase file);
+        bool DeleteAsset(int id);
+        void DeleteImage(LibraryAsset asset);
         void Dispose();
-        Book GetBook(int? id);
+        IEnumerable<LibraryAsset> GetAll();
+        IEnumerable<string> GetAllTypes();
+        string GetAuthor(int id);
         IEnumerable<Book> GetBooks();
-        string GetImageFileName(Book book);
-        void InsertBook(Book book, HttpPostedFileBase file);
+        IEnumerable<Brochure> GetBrochures();
+        LibraryAsset GetById(int? id);
+        string GetFrequency(int id);
+        string GetImageFileName(LibraryAsset asset);
+        string GetISBN(int id);
+        IEnumerable<Journal> GetJournals();
+        int GetPages(int id);
+        AssetType GetType(int? id);
         void Save();
-        void UpdateBook(Book book, HttpPostedFileBase file);
-        string UploadImage(Book book, HttpPostedFileBase file);
+        void UpdateAsset(LibraryAsset asset, HttpPostedFileBase file);
+        bool UploadData(HttpPostedFileBase file);
+        string UploadImage(LibraryAsset asset, HttpPostedFileBase file);
     }
 }

@@ -29,7 +29,7 @@ namespace Library.Service
             }
             catch (Exception)
             {
-
+                return null;
             }
             return null;
         }

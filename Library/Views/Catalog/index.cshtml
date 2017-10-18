@@ -10,55 +10,76 @@
 <p>
     <div class="dropdown">
         <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Add New<span class="caret"></span></a>
-        <button id="fileUpLoadButton" type="button" class="btn btn-info uploadButton">Upload Data</button>
         <ul class="dropdown-menu">
             @foreach (var type in Model.Types)
             {
                 <li>@Html.ActionLink("Add " + @type, "AddAsset", new { type = @type })</li>
             }
         </ul>
+
+
+
+        <div class="btn-group downloadButton">
+            <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Download Selected <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu">
+                <li><a href="#" id="xmlLoad">XML</a></li>
+                <li><a href="#" id="txtLoad">TXT</a></li>
+            </ul>
+        </div>
+
+        <button id="fileUpLoadButton" type="button" class="btn btn-info uploadButton">Upload Data</button>
     </div>
 </p>
-
+<input type="hidden" name="name" value="" />
 <div id="assetsTable">
-    <table class="table table-hover" id="catalogIndexTable">
-        <thead>
-            <tr>
-                <th>Image</th>
-                <th>Title</th>
-                <th>Author</th>
-                <th>Type</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var asset in Model.Assets)
-            {
+    @using (Html.BeginForm("DownLoadSelected", "Catalog", FormMethod.Get, new { id = "selectedForm" }))
+    {
+        <input type="hidden" id="downLoadType" name="type" value="xml" />
 
-                <tr class="assetRow" id="asset_@asset.Id">
-                    <td>
-                        @Html.ImageHelper("/img/assets_small/", asset.ImageUrl, "/img/none_small.png")
-                    </td>
-                    <td>@asset.Title</td>
-                    @if (asset.Type == Library.Data.Models.AssetType.Book)
-                    {
-                        <td>@asset.Author</td>
-                    }
-                    else
-                    {
-                        <td>@asset.Publisher</td>
-                    }
-                    <td>@asset.Type</td>
-
-                    <td>
-                        @Html.ActionLink("Edit", "Edit", new { id = asset.Id }) |
-                        @Html.ActionLink("Details", "Details", new { id = asset.Id }) |
-                        <a href="#" onclick="deleteConfirm(@asset.Id)">Delete</a>
-                    </td>
+        <table class="table table-hover" id="catalogIndexTable">
+            <thead>
+                <tr>
+                    <th>Select</th>
+                    <th>Image</th>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th>Type</th>
+                    <th></th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var asset in Model.Assets)
+                {
+                    <tr class="assetRow" id="asset_@asset.Id">
+                        <th>
+                            <input type="checkbox" name="selectedItems" value="@asset.Id" id="@asset.Id" />
+                        </th>
+                        <td>
+                            @Html.ImageHelper("/img/assets_small/", asset.ImageUrl, "/img/none_small.png")
+                        </td>
+                        <td>@asset.Title</td>
+                        @if (asset.Type == Library.Data.Models.AssetType.Book)
+                    {
+                            <td>@asset.Author</td>
+                        }
+                        else
+                        {
+                            <td>@asset.Publisher</td>
+                        }
+                        <td>@asset.Type</td>
+
+                        <td>
+                            @Html.ActionLink("Edit", "Edit", new { id = asset.Id }) |
+                            @Html.ActionLink("Details", "Details", new { id = asset.Id }) |
+                            <a href="#" onclick="deleteConfirm(@asset.Id)">Delete</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
 </div>
 
 <!-- Modal -->
@@ -88,10 +109,11 @@
     </div>
 </div>
 
-@Html.AntiForgeryToken()
+
 
 @using (Html.BeginForm("UploadData", "Catalog", FormMethod.Post, new { enctype = "multipart/form-data", id = "loadFileForm" }))
 {
+    @Html.AntiForgeryToken()
     <input type="file" id="fileinput" name="upFile" accept=".txt,.xml, |data files/*" onchange="uploadFile(event)" style="display: none" />
 }
 
@@ -105,7 +127,22 @@
         $(function () {
             $("#fileUpLoadButton").click(function () {
                 $("#fileinput").click();
-            })
+            });
+
+            $("#xmlLoad").click(function () {
+                if (checkMinimumSelect()) {
+                    $("#downLoadType").val("xml");
+                    $("#selectedForm").submit();
+                };
+
+            });
+
+            $("#txtLoad").click(function () {
+                if (checkMinimumSelect()) {
+                    $("#downLoadType").val("txt");
+                    $("#selectedForm").submit();
+                };
+            });
         });
 
         $(document).ready(function () {
@@ -113,7 +150,15 @@
                 $('#modalImg').attr('src', '/img/none_small.png');
             });
 
-        }); 
+        });
+
+        function checkMinimumSelect() {
+            if ($("input[name='selectedItems']:checked").length == 0) {
+                alert("Select minimum 1 record");
+                return false;
+            }
+            return true;
+        }
 
         function deleteConfirm(arg) {
             $.ajax({

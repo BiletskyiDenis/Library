@@ -8,6 +8,7 @@ using System.Web;
 using System.IO;
 using System.Web.Hosting;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 
 namespace Library.Service
 {
@@ -25,6 +26,11 @@ namespace Library.Service
         public IEnumerable<LibraryAsset> GetAll()
         {
             return context.LibraryAssets.ToList();
+        }
+
+        public IEnumerable<LibraryAsset> GetSelected(int[] selected)
+        {
+            return GetAll().Where(s => selected.Contains(s.Id)).ToList();
         }
 
         public LibraryAsset GetById(int? id)
@@ -192,7 +198,6 @@ namespace Library.Service
 
         public bool UploadData(HttpPostedFileBase file)
         {
-            LibraryAsset asset;
             byte[] data = new byte[] { };
 
             var fileExt = Path.GetExtension(file.FileName);
@@ -212,11 +217,11 @@ namespace Library.Service
                 {
                     if (fileExt == ".xml")
                     {
-                        asset = new FileDataHandler().RestoreFromXml(stream);
+                        RestoreAssetFromXml(stream);
                     }
                     else
                     {
-                        asset = new FileDataHandler().RestoreFromTxt(stream);
+                        RestoreAssetFromTxt(stream);
                     }
 
                 }
@@ -227,13 +232,70 @@ namespace Library.Service
                 return false;
             }
 
-            if (asset != null)
+            return true;
+        }
+
+        private void RestoreAssetFromXml(Stream stream)
+        {
+            var doc = XDocument.Load(stream);
+            if (doc.Elements().FirstOrDefault().Name == null)
+                return;
+
+            if (doc.Elements().FirstOrDefault().Name == "List")
             {
-                AddAsset(asset, null);
+                var assets = new FileDataHandler().RestoreAssetsListFromXml(doc);
+                if (assets == null)
+                    return;
+
+                foreach (var item in assets)
+                {
+                    if (item != null)
+                    {
+                        AddAsset(item, null);
+                    }
+                }
+
                 Save();
             }
+            else
+            {
+                var asset = new FileDataHandler().RestoreAssetFromXml(doc);
+                if (asset != null)
+                {
+                    AddAsset(asset, null);
+                    Save();
+                }
+            }
+        }
 
-            return true;
+        private void RestoreAssetFromTxt(Stream stream)
+        {
+            TextReader tr = new StreamReader(stream);
+            var data = tr.ReadToEnd();
+            if (data.Substring(1, 4) == "List")
+            {
+                var assets = new FileDataHandler().RestoreAssetsListFromTxt(data);
+                if (assets == null)
+                    return;
+                foreach (var item in assets)
+                {
+                    if (item != null)
+                    {
+                        AddAsset(item, null);
+                    }
+                }
+
+                Save();
+            }
+            else
+            {
+                var asset = new FileDataHandler().RestoreAssetFromTxt(data);
+                if (asset != null)
+                {
+                    AddAsset(asset, null);
+                    Save();
+                }
+            }
         }
 
         public void DeleteImage(LibraryAsset asset)

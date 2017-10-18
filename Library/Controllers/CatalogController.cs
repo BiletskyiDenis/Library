@@ -260,12 +260,12 @@ namespace Library.Controllers
 
             if (type == "xml")
             {
-                downFile = fileData.GetXml(asset);
+                downFile = fileData.GetXmlFile(asset);
             }
 
             if (type == "txt")
             {
-                downFile = fileData.GetTXT(asset);
+                downFile = fileData.GetTXTFile(asset);
             }
 
             var filename = Regex.Replace(asset.Title, @"[^a-zA-z0-9]+", String.Empty) + "." + type;
@@ -273,12 +273,51 @@ namespace Library.Controllers
             return File(downFile, System.Net.Mime.MediaTypeNames.Application.Octet, filename);
         }
 
+        public ActionResult DownLoadSelected(string type, int[] selectedItems)
+        {
+            if (type == null || selectedItems == null)
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            }
+
+            if (selectedItems.Length==0)
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            }
+
+            if (selectedItems.Length==1)
+            {
+                return DownloadData(type, selectedItems[0]);
+            }
+
+            var tmpAssets = assets.GetSelected(selectedItems);
+
+            var fileData = new FileDataHandler();
+            var downFile = new byte[0];
+
+            if (type == "xml" && tmpAssets.Count()>0)
+            {
+                downFile = fileData.GetXmlListFile(tmpAssets);
+            }
+
+            if (type == "txt" && tmpAssets.Count() > 0)
+            {
+                downFile = fileData.GetTXTListFile(tmpAssets);
+            }
+
+            var filename = type.ToUpper()+"DataList." + type;
+
+            return File(downFile, System.Net.Mime.MediaTypeNames.Application.Octet, filename);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult UploadData(FormCollection formCollection)
         {
             HttpPostedFileBase file = Request.Files["upFile"];
             if (!assets.UploadData(file))
             {
-                return new HttpStatusCodeResult(HttpStatusCode.InternalServerError);
+                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             };
             return RedirectToAction("Index");
         }

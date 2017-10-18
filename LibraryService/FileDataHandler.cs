@@ -9,43 +9,43 @@ using System.Xml.Serialization;
 using System.Reflection;
 using Library.Data.Models;
 using System.Web;
+using System.Xml.Linq;
+using System.Globalization;
 
 namespace Library.Service
 {
     public class FileDataHandler
     {
-        public byte[] GetXml<T>(T serializableObject) where T:LibraryAsset
+        private XElement GetXmlElement<T>(T obj) where T : LibraryAsset
         {
-            if (serializableObject == null) { return null; }
-            try
+            var type = obj.GetType();
+            var fields = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+            var asset = new XElement(type.Name);
+
+            foreach (var item in fields)
             {
-                XmlSerializer serializer = new XmlSerializer(serializableObject.GetType());
-                using (MemoryStream stream = new MemoryStream())
+                if (item.Name == "Id")
                 {
-                    serializer.Serialize(stream, serializableObject);
-                    stream.Position = 0;
-                    return stream.ToArray();
+                    continue;
                 }
+                asset.Add(new XElement(item.Name, item.GetValue(obj)));
             }
-            catch (Exception)
-            {
-                return null;
-            }
-            return null;
+            return asset;
         }
 
-        public byte[] GetTXT<T>(T obj) where T : LibraryAsset
+        private string GetTXT<T>(T obj) where T : LibraryAsset
         {
             var type = obj.GetType();
             var fields = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
             var builder = new StringBuilder();
 
-            builder.Append($"[{type.Name}]");
+            builder.Append($"#[{type.Name}]");
             builder.Append(Environment.NewLine);
             builder.Append(Environment.NewLine);
             foreach (var item in fields)
             {
-                if (item.Name=="Id")
+                if (item.Name == "Id")
                 {
                     continue;
                 }
@@ -54,15 +54,56 @@ namespace Library.Service
                 builder.Append(Environment.NewLine);
             }
 
-            return Encoding.UTF8.GetBytes(builder.ToString());
+            return builder.ToString();
         }
 
-        public LibraryAsset RestoreFromTxt(Stream file)
+        public byte[] GetXmlFile<T>(T obj) where T : LibraryAsset
         {
-            TextReader tr = new StreamReader(file);
-            var data = tr.ReadToEnd();
+            var doc = new XDocument();
+            doc.Add(GetXmlElement(obj));
+            return Encoding.UTF8.GetBytes(doc.ToString());
+        }
+
+        public byte[] GetXmlListFile<T>(IEnumerable<T> obj) where T : LibraryAsset
+        {
+            var doc = new XDocument();
+            var list = new XElement("List");
+            foreach (var item in obj)
+            {
+                list.Add(GetXmlElement(item));
+            }
+            doc.Add(list);
+            return Encoding.UTF8.GetBytes(doc.ToString());
+        }
+
+        public byte[] GetTXTListFile<T>(IEnumerable<T> obj) where T : LibraryAsset
+        {
+            var doc = new StringBuilder();
+            doc.Append("[List]");
+            doc.Append(Environment.NewLine);
+
+            foreach (var item in obj)
+            {
+                doc.Append(GetTXT(item));
+            }
+
+            return Encoding.UTF8.GetBytes(doc.ToString());
+        }
+
+        public byte[] GetTXTFile<T>(T obj) where T : LibraryAsset
+        {
+            return Encoding.UTF8.GetBytes(GetTXT(obj));
+        }
+
+        private LibraryAsset RestoreFromTxt(string data)
+        {
             var assetData = data.Split('[', ']').Select(s => s.Replace(Environment.NewLine, string.Empty)).ToArray();
             var asset = GetAssetFromType(assetData[1]);
+
+            if (asset==null)
+            {
+                return null;
+            }
 
             var type = asset.GetType();
             var fields = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
@@ -82,37 +123,59 @@ namespace Library.Service
 
         }
 
-        public LibraryAsset RestoreFromXml(Stream file)
+        private LibraryAsset RestoreFromXml(XElement doc)
         {
-            LibraryAsset objectOut = null;
-            try
+            if (doc.Name == null)
+            { return null; }
+
+            var asset = GetAssetFromType(doc.Name.ToString());
+
+            if (asset==null)
+            { return null; }
+
+            var type = asset.GetType();
+            var fields = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            foreach (var field in fields)
             {
-                var xmlDocument = new XmlDocument();
-                xmlDocument.Load(file);
+                if (field.Name == "Id")
+                    continue;
 
-                var asset = GetAssetFromType(xmlDocument.DocumentElement.Name);
-                string xmlString = xmlDocument.OuterXml;
-
-                using (StringReader read = new StringReader(xmlString))
+                foreach (var item in doc.Elements())
                 {
-                    Type outType = asset.GetType();
-
-                    XmlSerializer serializer = new XmlSerializer(outType);
-                    using (XmlReader reader = new XmlTextReader(read))
+                    if (field.Name == item.Name)
                     {
-                        objectOut = (LibraryAsset)Convert.ChangeType(serializer.Deserialize(reader), asset.GetType());
-                        reader.Close();
+                        field.SetValue(asset, Convert.ChangeType(item.Value, field.PropertyType,CultureInfo.InvariantCulture));
+                        break;
                     }
-
-                    read.Close();
                 }
             }
-            catch (Exception)
-            {
 
-            }
+            return asset;
+        }
 
-            return objectOut;
+        public LibraryAsset RestoreAssetFromXml(XDocument doc)
+        {
+            return RestoreFromXml(doc.Elements().FirstOrDefault());
+        }
+
+        public LibraryAsset RestoreAssetFromTxt(string doc)
+        {
+            return RestoreFromTxt(doc);
+        }
+
+        public IEnumerable<LibraryAsset> RestoreAssetsListFromXml(XDocument doc)
+        {
+            if (doc.Elements().FirstOrDefault().Name == null
+                && doc.Elements().FirstOrDefault().Name!="List")
+            { return null; }
+
+            return doc.Elements().Elements().Select(s => RestoreFromXml(s));
+        }
+
+        public IEnumerable<LibraryAsset> RestoreAssetsListFromTxt(string doc)
+        {
+            var data = doc.Split('#').Where((s,i)=>i>0).ToArray();
+            return data.Select(s=> RestoreFromTxt(s));
         }
 
         public LibraryAsset GetAssetFromType(string type)

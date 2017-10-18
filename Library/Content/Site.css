@@ -127,6 +127,7 @@ textarea {
 
 .uploadButton {
     float: right;
+    margin-right:15px;
 }
 
 #preview_image{

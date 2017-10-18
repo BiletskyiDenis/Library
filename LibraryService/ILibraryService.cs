@@ -21,6 +21,7 @@ namespace Library.Service
         string GetISBN(int id);
         IEnumerable<Journal> GetJournals();
         int GetPages(int id);
+        IEnumerable<LibraryAsset> GetSelected(int[] selected);
         AssetType GetType(int? id);
         void Save();
         void UpdateAsset(LibraryAsset asset, HttpPostedFileBase file);

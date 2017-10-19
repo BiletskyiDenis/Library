@@ -9,7 +9,7 @@ namespace Library
     {
         public Bitmap ImgSource { get; }
 
-        public Size NewImageSize(Image fullSizeImage, int resize)
+        private Size NewImageSize(Image fullSizeImage, int resize)
         {
             int newHeight;
             int newWidth;
@@ -28,7 +28,7 @@ namespace Library
             return new Size(newWidth, newHeight);
         }
 
-        public Bitmap ResizeImage(Image image, int resize)
+        private Bitmap ResizeImage(Image image, int resize)
         {
 
             Size imageSize = NewImageSize(image, resize);

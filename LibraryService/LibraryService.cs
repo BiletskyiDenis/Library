@@ -14,13 +14,15 @@ namespace Library.Service
 {
     public class LibraryService : ILibraryService
     {
-        private LibraryContext context;
+        private readonly LibraryContext context;
+        private readonly FileDataBase fileHandler;
         private readonly string imageStorePath = @"~/img/assets/";
         private readonly string imageSmallStorePath = @"~/img/assets_small/";
 
         public LibraryService(LibraryContext context)
         {
             this.context = context;
+            this.fileHandler = new FileDataHandler();
         }
 
         public IEnumerable<LibraryAsset> GetAll()
@@ -243,7 +245,7 @@ namespace Library.Service
 
             if (doc.Elements().FirstOrDefault().Name == "List")
             {
-                var assets = new FileDataHandler().RestoreAssetsListFromXml(doc);
+                var assets = fileHandler.RestoreAssetsListFromXml(doc);
                 if (assets == null)
                     return;
 
@@ -259,7 +261,7 @@ namespace Library.Service
             }
             else
             {
-                var asset = new FileDataHandler().RestoreAssetFromXml(doc);
+                var asset = fileHandler.RestoreAssetFromXml(doc);
                 if (asset != null)
                 {
                     AddAsset(asset, null);
@@ -274,7 +276,7 @@ namespace Library.Service
             var data = tr.ReadToEnd();
             if (data.Substring(1, 4) == "List")
             {
-                var assets = new FileDataHandler().RestoreAssetsListFromTxt(data);
+                var assets = fileHandler.RestoreAssetsListFromTxt(data);
                 if (assets == null)
                     return;
                 foreach (var item in assets)
@@ -289,7 +291,7 @@ namespace Library.Service
             }
             else
             {
-                var asset = new FileDataHandler().RestoreAssetFromTxt(data);
+                var asset = fileHandler.RestoreAssetFromTxt(data);
                 if (asset != null)
                 {
                     AddAsset(asset, null);
@@ -350,6 +352,7 @@ namespace Library.Service
             }
             this.disposed = true;
         }
+
         public void Dispose()
         {
             Dispose(true);

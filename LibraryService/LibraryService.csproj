@@ -43,6 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FileDataBase.cs" />
     <Compile Include="FileDataHandler.cs" />
     <Compile Include="ILibraryService.cs" />
     <Compile Include="ImageHandler.cs" />

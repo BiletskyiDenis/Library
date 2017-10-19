@@ -14,9 +14,72 @@ using System.Globalization;
 
 namespace Library.Service
 {
-    public class FileDataHandler
+    public class FileDataHandler : FileDataBase
     {
-        private XElement GetXmlElement<T>(T obj) where T : LibraryAsset
+        public override byte[] GetXmlFile<T>(T obj)
+        {
+            var doc = new XDocument();
+            doc.Add(GetXml(obj));
+            return Encoding.UTF8.GetBytes(doc.ToString());
+        }
+
+        public override byte[] GetXmlListFile<T>(IEnumerable<T> obj)
+        {
+            var doc = new XDocument();
+            var list = new XElement("List");
+            foreach (var item in obj)
+            {
+                list.Add(GetXml(item));
+            }
+            doc.Add(list);
+            return Encoding.UTF8.GetBytes(doc.ToString());
+        }
+
+        public override byte[] GetTXTListFile<T>(IEnumerable<T> obj)
+        {
+            var doc = new StringBuilder();
+            doc.Append("[List]");
+            doc.Append(Environment.NewLine);
+
+            foreach (var item in obj)
+            {
+                doc.Append(GetTXT(item));
+            }
+
+            return Encoding.UTF8.GetBytes(doc.ToString());
+        }
+
+        public override byte[] GetTXTFile<T>(T obj)
+        {
+            return Encoding.UTF8.GetBytes(GetTXT(obj));
+        }
+
+        public override LibraryAsset RestoreAssetFromXml(XDocument doc)
+        {
+            return RestoreFromXml(doc.Elements().FirstOrDefault());
+        }
+
+        public override LibraryAsset RestoreAssetFromTxt(string doc)
+        {
+            return RestoreFromTxt(doc);
+        }
+
+        public override IEnumerable<LibraryAsset> RestoreAssetsListFromXml(XDocument doc)
+        {
+            if (doc.Elements().FirstOrDefault().Name == null
+                && doc.Elements().FirstOrDefault().Name!="List")
+            { return null; }
+
+            return doc.Elements().Elements().Select(s => RestoreFromXml(s));
+        }
+
+        public override IEnumerable<LibraryAsset> RestoreAssetsListFromTxt(string doc)
+        {
+            var data = doc.Split('#').Where((s,i)=>i>0).ToArray();
+            return data.Select(s=> RestoreFromTxt(s));
+        }
+
+        private XElement GetXml<T>(T obj) where T : LibraryAsset
         {
             var type = obj.GetType();
             var fields = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
@@ -56,51 +119,12 @@ namespace Library.Service
 
             return builder.ToString();
         }
-
-        public byte[] GetXmlFile<T>(T obj) where T : LibraryAsset
-        {
-            var doc = new XDocument();
-            doc.Add(GetXmlElement(obj));
-            return Encoding.UTF8.GetBytes(doc.ToString());
-        }
-
-        public byte[] GetXmlListFile<T>(IEnumerable<T> obj) where T : LibraryAsset
-        {
-            var doc = new XDocument();
-            var list = new XElement("List");
-            foreach (var item in obj)
-            {
-                list.Add(GetXmlElement(item));
-            }
-            doc.Add(list);
-            return Encoding.UTF8.GetBytes(doc.ToString());
-        }
-
-        public byte[] GetTXTListFile<T>(IEnumerable<T> obj) where T : LibraryAsset
-        {
-            var doc = new StringBuilder();
-            doc.Append("[List]");
-            doc.Append(Environment.NewLine);
-
-            foreach (var item in obj)
-            {
-                doc.Append(GetTXT(item));
-            }
-
-            return Encoding.UTF8.GetBytes(doc.ToString());
-        }
-
-        public byte[] GetTXTFile<T>(T obj) where T : LibraryAsset
-        {
-            return Encoding.UTF8.GetBytes(GetTXT(obj));
-        }
-
         private LibraryAsset RestoreFromTxt(string data)
         {
             var assetData = data.Split('[', ']').Select(s => s.Replace(Environment.NewLine, string.Empty)).ToArray();
             var asset = GetAssetFromType(assetData[1]);
 
-            if (asset==null)
+            if (asset == null)
             {
                 return null;
             }
@@ -130,7 +154,7 @@ namespace Library.Service
 
             var asset = GetAssetFromType(doc.Name.ToString());
 
-            if (asset==null)
+            if (asset == null)
             { return null; }
 
             var type = asset.GetType();
@@ -144,7 +168,7 @@ namespace Library.Service
                 {
                     if (field.Name == item.Name)
                     {
-                        field.SetValue(asset, Convert.ChangeType(item.Value, field.PropertyType,CultureInfo.InvariantCulture));
+                        field.SetValue(asset, Convert.ChangeType(item.Value, field.PropertyType, CultureInfo.InvariantCulture));
                         break;
                     }
                 }
@@ -152,33 +176,8 @@ namespace Library.Service
 
             return asset;
         }
-
-        public LibraryAsset RestoreAssetFromXml(XDocument doc)
-        {
-            return RestoreFromXml(doc.Elements().FirstOrDefault());
-        }
-
-        public LibraryAsset RestoreAssetFromTxt(string doc)
-        {
-            return RestoreFromTxt(doc);
-        }
-
-        public IEnumerable<LibraryAsset> RestoreAssetsListFromXml(XDocument doc)
-        {
-            if (doc.Elements().FirstOrDefault().Name == null
-                && doc.Elements().FirstOrDefault().Name!="List")
-            { return null; }
-
-            return doc.Elements().Elements().Select(s => RestoreFromXml(s));
-        }
-
-        public IEnumerable<LibraryAsset> RestoreAssetsListFromTxt(string doc)
-        {
-            var data = doc.Split('#').Where((s,i)=>i>0).ToArray();
-            return data.Select(s=> RestoreFromTxt(s));
-        }
-
-        public LibraryAsset GetAssetFromType(string type)
+       
+        private LibraryAsset GetAssetFromType(string type)
         {
             AssetType assetType;
             try

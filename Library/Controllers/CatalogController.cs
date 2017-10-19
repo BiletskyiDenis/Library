@@ -255,7 +255,7 @@ namespace Library.Controllers
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
 
-            var fileData = new FileDataHandler();
+            FileDataBase fileData = new FileDataHandler();
             byte[] downFile = new byte[0];
 
             if (type == "xml")

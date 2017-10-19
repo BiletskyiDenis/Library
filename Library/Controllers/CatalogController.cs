@@ -292,7 +292,7 @@ namespace Library.Controllers
 
             var tmpAssets = assets.GetSelected(selectedItems);
 
-            var fileData = new FileDataHandler();
+            FileDataBase fileData = new FileDataHandler();
             var downFile = new byte[0];
 
             if (type == "xml" && tmpAssets.Count()>0)

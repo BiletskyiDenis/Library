@@ -1,14 +1,7 @@
-﻿using Library.Data.Models;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Library.Data.Models
 {
-    [Serializable]
     public class Brochure: LibraryAsset
     {
         [Required]

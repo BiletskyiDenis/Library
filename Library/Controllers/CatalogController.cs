@@ -1,20 +1,20 @@
-﻿using Library.Data;
-using Library.Data.Models;
-using Library.Models.Catalog;
-using Library.Service;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Web;
 using System.Web.Mvc;
+using Library.Data;
+using Library.Data.Models;
+using Library.Models.Catalog;
+using Library.Service;
 
 namespace Library.Controllers
 {
     public class CatalogController : Controller
     {
         private readonly ILibraryService assets;
+
         public CatalogController()
         {
             this.assets = new LibraryService(new LibraryContext("name=LibraryDB"));
